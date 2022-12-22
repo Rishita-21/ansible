@@ -1,0 +1,82 @@
+---
+     - name: check whether ssh connection is established or not.
+       hosts: demo,linux3,web
+       connection: ssh
+      gather_facts:
+
+
+
+      tasks:
+
+    - name: Purge the existing csv files if exists
+      file:
+        path: "/tmp/ping.csv"
+        state: absent
+      delegate_to: localhost
+
+
+    - name: ping
+      ping:
+        #data: crash
+      register: ping
+      ignore_errors: yes
+    - debug: var=ping
+
+
+
+    - name: if fails
+      shell: echo "task failed"
+
+      register: fail
+      when: ping is failed
+    - debug: msg="sorry ping failed"
+      when: ping is failed
+
+
+    - name: Create a 2048-bit SSH key for user Rishita in ~Rishita/.ssh/id_rsa
+      become: yes
+      ansible.builtin.user:
+        name: Rishita
+        generate_ssh_key: yes
+        ssh_key_bits: 2048
+        ssh_key_file: .ssh/id_rsa
+      delegate_to: 172.31.47.230
+
+
+
+
+
+    - name: if success
+      shell: echo "{{ ansible_hostname, ansible_os_family }}"
+      register: success
+      when: ping is succeeded
+    - debug: var=success.stdout
+      when: ping is succeeded
+
+
+
+    - set_fact:
+        csv_tmp: >
+          {{ansible_hostname}}, {{ansible_os_family}}
+      register: data
+    - debug: var=data
+
+
+
+    - name: CSV - Create file and set the header
+      lineinfile:
+        dest: /tmp/ping.csv
+        line:
+          ansible_hostname, ansible_os_family
+        create: yes
+        state: present
+      delegate_to: localhost
+
+
+
+    - name: CSV - Write information into .csv file
+      lineinfile:
+        insertafter: EOF
+        dest: "/tmp/ping.csv"
+        line: "{{csv_tmp}}"
+      delegate_to: localhost
