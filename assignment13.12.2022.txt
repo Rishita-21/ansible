@@ -1,0 +1,153 @@
+---
+
+- name: Playbook for checking cpu info
+  hosts: windows
+  gather_facts: false
+  ignore_errors: yes
+
+  vars:
+    filename: "cpu_report_{{ date }}.csv"
+  tasks:
+    - name: CSV - Generate output filename
+      set_fact: date="{{lookup('pipe','date +%Y%m%d')}}"   #(using lookup plugins, we can fetch data from external resources,such as local filesystems or some external datastores or services.)
+      run_once: true                                                             #(pipe-Run a command and return the output)
+      register: name
+    - debug:
+        var: name
+
+
+    - name: Purge the existing csv files if exists
+      file:
+           path: "/tmp/{{filename}}"
+           state: absent
+      delegate_to: localhost
+
+
+    - name: Get listener configuration details
+      shell: lscpu
+      register: output
+
+    - set_fact:
+         architecture: "{{ output.stdout_lines[0].split().1 }}"
+ 
+  - debug: var=architecture
+
+
+    - set_fact:
+          CPUopmode: "{{ output.stdout_lines[1].split().2 }}"
+
+    - debug: var=CPUopmode
+
+
+    - set_fact:
+          VenderID: "{{ output.stdout_lines[9].split().2 }}"
+
+    - debug: var=VenderID
+
+
+    - set_fact:
+          Modelname: "{{ output.stdout_lines[12].split().2 }}"
+
+    - debug: var=Modelname
+
+    - set_fact:
+          ansiblefact: "{{ output.ansible_facts}}"
+
+    - debug: var=ansiblefact
+
+
+    - set_fact:
+          virtualisation_type: "{{ output.stdout_lines[17].split().1 }}"
+
+    - debug: var=virtualisation_type
+
+
+    - name: CSV - Create file and set the header
+      copy:
+          content: "hostname,Architecture,CPU_op-mode,Vender_ID,Model_name,ansible_fact,virtualisation_type"
+          dest: "/tmp/{{filename}}"
+      delegate_to: localhost
+      run_once: true
+
+
+    - name: Add the contents to the csv file
+      lineinfile:
+            line: "{{ inventory_hostname }},{{architecture}},{{CPUopmode}},{{VenderID}},{{Modelname}},{{ansiblefact}},{{virtualisation_type}}"
+            path: "/tmp/{{filename}}"
+      delegate_to: localhost
+
+
+********************************************************************************************************************************************
+---
+- name: Install packages via loop
+  hosts: windows
+  become: yes
+  connection: ssh
+  vars:
+    packages: [ftp,telnet,htop]
+
+  tasks:
+      - name: install packages
+        yum:
+           name: '{{packages}}'
+           state: present
+~
+****************************************************************************************************************************************
+---
+- name: add users on my remote nodes
+  hosts: demo
+  user: ansible
+  become: yes
+  connection: ssh
+  tasks:
+          - name: add list of users in my nodes
+            user: name='{{item}}' state=present
+            with_items:
+                    - Bhupinder
+                    - Sachin
+                    - vascoDgama
+                    - Rishita
+***************************************************************************************************************************************
+
+---
+
+- name: playbook for getting windows config details in CSV.
+  hosts: windows
+  gather_facts: false
+  ignore_errors: yes
+
+  tasks:
+
+    - name: Purge the existing csv files if exists
+      file:
+           path: "/tmp/config_details.csv"
+           state: absent
+      delegate_to: localhost
+
+    - name: Get listener configuration details
+      win_shell: Winrm get winrm/config
+      register: output
+
+    - set_fact:
+         maxtimeoutms: "{{ output.stdout_lines[2].split().2 }}"
+
+    - debug: var=maxtimeoutms
+
+    - set_fact:
+          url_prefix: "{{ output.stdout_lines[7].split().2 }}"
+
+    - debug: var=url_prefix
+
+    - name: CSV - Create file and set the header
+      copy:
+          content: "hostname,maxtimeoutms,url_prefix"
+          dest: "/tmp/config_details.csv"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Add the contents to the csv file
+      lineinfile:
+            line: "{{ inventory_hostname }},{{ maxtimeoutms }},{{ url_prefix }}"
+            path: "/tmp/config_details.csv"
+      delegate_to: localhost
+                
