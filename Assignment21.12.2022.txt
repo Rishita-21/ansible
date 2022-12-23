@@ -1,0 +1,49 @@
+Problem Statement: Install Packages and store info in config file.
+
+---
+- name: Install packages via loop
+  hosts: demo
+  become: yes
+  connection: ssh
+  vars:
+    packages: [ftp,telnet,htop]
+
+  tasks:
+      - name: install packages
+        yum:
+           name: '{{packages}}'
+           state: present
+       loop:
+            '{{packages}}'
+            
+
+    - name: Ensure the latest version of packages.
+         yum:
+                name: '{{packages}}'
+                state: latest
+       loop:
+               '{{packages}}'
+
+    - name: Copy updated packages config file
+        copy:
+               src: /tmp/'{{packages}}'.conf
+              dest: /etc/'{{packages}}'.conf
+        notify:
+              - Restart packages
+        loop:
+               '{{packages}}'
+
+    - name: Ensure packages are running
+       service:
+              name: httpd
+              state: started
+        loop:
+                '{{packages}}'
+
+      handlers:
+         - name: Restart packages
+           service:
+                name: '{{packages}}'
+                state: restarted
+      loop:
+                '{{packages}}'
