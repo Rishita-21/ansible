@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  user: ansible
+  become: yes
+  connection: ssh
+  vars:
+     group: Project
+  tasks:
+     - name: Create a group for users
+       group:
+           name: "{{group}}"
+           state: present
+     - name: Create Users
+        user:
+            name: "{{item}}"
+            state: present
+            shell: /bin/bash
+            group: "{{ group }}"
+       loop:
+            - Rishita
+            - Raj
+            - Reena
+      - name: password creation for all the users
+        user:
+            name: Rishita
+            password: {{'rishita123$' | password_hash('sha512')}}
+            register: Rishita
+         user:
+            name: Raj
+            password: {{'raj123$' | password_hash('sha512')}}
+            register: Rishita
+          user:
+            name: Reena
+            password: {{'reena123$' | password_hash('sha512')}}
+            register: Reena
+
+      - name: CSV file creation with header
+        lineinfile:
+             dest: /tmp/user_info.csv
+         line:
+              username,password
+              create: yes
+              state: present
+        delegate_to: localhost
+
+      - name: Write information to the .Csv file.
+        lineinfile:
+              insertafter: EOF
+              dest: /tmp/user_info.csv
+              line: "{{ item }}"
+        loop:
+               - Rishita,rishita123$
+               - Raj,raj123$
+               - Reena,reena123$
+       delegate_to: localhost
+
+     - name: Mail to the particular users with password info
+        mail:
+             host: smtp.gmail.com
+             port: 587
+             username: rrddwivedi2110@gmail.com
+             password: dwivedi8461@12
+             to: dwivedirishita@gmail.com
+             subject: Credentials for log in are here!!!!!!!!!!
+             attach:
+                - /tmp/user_info.csv
+    
