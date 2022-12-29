@@ -1,0 +1,68 @@
+Ansible Vault
+**************
+
+* to protect and secure Ansible Environemnt.
+* It is best practice to use Ansible Vault feature which will password protect our code.
+
+command to create a vault file
+# ansible-vault create httpbyvault.yml
+---
+- name: Install httpd package
+ hosts: localhost
+ tasks:
+ - name: Install package
+    yum: 
+       name: httpd
+       state: present
+
+* After this you will be required to put password.
+* To run a vaulted yml file
+
+" ansible-playbook httpdbyvault.yml --ask-vault-pass "
+
+* you can not apply Cat command to it(instead use view command).
+* after you put the playbook run command , put the vault password.
+* To view the ansible vaulted file , we can view it through below command
+
+   " ansible-vault view filename.yml "
+
+* To edit an existing vaulted yml file 
+  " ansible-vault edit httpbyvault.yml "
+
+* to remove httpd or any package
+  rpm -qa | grep httpd
+
+* ansible- vault --help
+*To get a list of options
+
+ansible-vault --help
+
+*ansible-vault encrpyt filename.yml 
+
+this command is used to change the existing password .
+
+Encrypt Strings within a Playbook
+************************************
+
+* Strings/words can be encrypted within a playbook
+* for example we are installing some package and we don't want to show which package we are installing.
+
+ansible-vault encrypt_string httpd
+ansible-vault create/encrypt outputbystring.yml
+
+---
+- name: Test encrypted output
+  hosts: localhost
+  vars:  
+          secret: !vault | saxjabxjsbjckwedbwkeewdebdeekcbekwcb
+ckjnkwwdbcdjcbdjwcwdkjcbwekckewcbkwcbkwebcececkebckebc
+dkejwbckekcbwekjbckwejbckbewcwebckwebckwejckweckwkcbkjcw
+
+
+  tasks:
+            - name: Print encrypted string
+               debug: 
+                            var: secret
+
+
+
