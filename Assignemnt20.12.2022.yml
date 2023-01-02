@@ -58,9 +58,9 @@
         mail:
              host: smtp.gmail.com
              port: 587
-             username: rrddwivedi2110@gmail.com
-             password: dwivedi8461@12
-             to: dwivedirishita@gmail.com
+             username: xwkejbejcbednkne@gmail.com
+             password: cdwnkejcbwj@nds
+             to: cxwjebwjkwedejdnnkned@gmail.com
              subject: Credentials for log in are here!!!!!!!!!!
              attach:
                 - /tmp/user_info.csv
